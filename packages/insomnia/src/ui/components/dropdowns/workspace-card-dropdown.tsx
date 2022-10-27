@@ -1,4 +1,3 @@
-import { SvgIcon } from 'insomnia-components';
 import React, { FC, useCallback, useState } from 'react';
 
 import { parseApiSpec } from '../../../common/api-specs';
@@ -21,7 +20,8 @@ import { DropdownDivider } from '../base/dropdown/dropdown-divider';
 import { DropdownItem } from '../base/dropdown/dropdown-item';
 import { showError, showModal, showPrompt } from '../modals';
 import { AskModal } from '../modals/ask-modal';
-import { showWorkspaceDuplicateModal } from '../modals/workspace-duplicate-modal';
+import { WorkspaceDuplicateModal } from '../modals/workspace-duplicate-modal';
+import { SvgIcon } from '../svg-icon';
 
 interface Props {
   workspace: Workspace;
@@ -33,7 +33,7 @@ const spinner = <i className="fa fa-refresh fa-spin" />;
 
 const useWorkspaceHandlers = ({ workspace, apiSpec }: Props) => {
   const handleDuplicate = useCallback(() => {
-    showWorkspaceDuplicateModal({ workspace, apiSpec });
+    showModal(WorkspaceDuplicateModal, { workspace, apiSpec });
   }, [workspace, apiSpec]);
 
   const workspaceName = getWorkspaceName(workspace, apiSpec);
@@ -45,9 +45,7 @@ const useWorkspaceHandlers = ({ workspace, apiSpec }: Props) => {
       submitName: 'Rename',
       selectText: true,
       label: 'Name',
-      onComplete: async name => {
-        await workspaceOperations.rename(workspace, apiSpec, name);
-      },
+      onComplete: name => workspaceOperations.rename(name, workspace, apiSpec),
     });
   }, [apiSpec, workspace, workspaceName]);
 
@@ -106,8 +104,7 @@ const useDocumentActionPlugins = ({ workspace, apiSpec, project }: Props) => {
   const renderPluginDropdownItems = useCallback(() => actionPlugins.map(p => (
     <DropdownItem
       key={`${p.plugin.name}:${p.label}`}
-      value={p}
-      onClick={handleClick}
+      onClick={() => handleClick(p)}
       stayOpenAfterClick={!p.hideAfterClick}
     >
       {isLoading(p.label) && spinner}

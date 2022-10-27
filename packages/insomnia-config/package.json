@@ -1,7 +1,7 @@
 {
-  "private": false,
+  "private": true,
   "name": "insomnia-config",
-  "version": "3.5.1-beta.0",
+  "version": "3.6.1-beta.2",
   "homepage": "https://insomnia.rest",
   "description": "Configuration for Insomnia",
   "author": "Kong <office@konghq.com>",
@@ -22,7 +22,7 @@
     "lint:fix": "npm run lint -- --fix",
     "test": "jest",
     "pregenerate": "npm run build",
-    "generate": "ts-node ./src/generated/generate.ts",
+    "generate": "esr ./src/generated/generate.ts",
     "clean": "tsc --build tsconfig.build.json --clean",
     "prebuild": "npm run clean",
     "build": "tsc --build tsconfig.build.json"
@@ -30,11 +30,11 @@
   "dependencies": {
     "@apideck/better-ajv-errors": "^0.2.6",
     "ajv": "^8.6.2",
-    "insomnia-common": "3.5.1-beta.0"
+    "insomnia-common": "3.6.1-beta.2"
   },
   "devDependencies": {
     "jest": "^28.1.0",
-    "ts-node": "^10.2.1",
+    "esbuild-runner": "2.2.1",
     "typescript": "^4.5.5",
     "typescript-json-schema": "^0.50.1"
   }

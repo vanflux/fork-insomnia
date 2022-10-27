@@ -1,22 +1,26 @@
 // eslint-disable-next-line simple-import-sort/imports
-import { ipcRenderer } from 'electron';
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React, { lazy, Suspense } from 'react';
+import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
-
-import { getProductName, isDevelopment } from '../common/constants';
-import { database as db } from '../common/database';
+import './rendererListeners';
+import { ACTIVITY_DEBUG, ACTIVITY_HOME, ACTIVITY_SPEC, ACTIVITY_UNIT_TEST, getProductName, isDevelopment } from '../common/constants';
+import { database } from '../common/database';
 import { initializeLogging } from '../common/log';
 import * as models from '../models';
 import { initNewOAuthSession } from '../network/o-auth-2/misc';
 import { init as initPlugins } from '../plugins';
 import { applyColorScheme } from '../plugins/misc';
-import App from './containers/app';
 import { init as initStore } from './redux/modules';
 import { initializeSentry } from './sentry';
-import { MemoryRouter as Router } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 
-import './css/index.less'; // this import must come after `App`.  the reason is not yet known.
+import Root from './routes/root';
+import './css/index.less'; // this import must come after `Root`.
+import { AppLoadingIndicator } from './components/app-loading-indicator';
+const Project = lazy(() => import('./routes/project'));
+const UnitTest = lazy(() => import('./routes/unit-test'));
+const Debug = lazy(() => import('./routes/debug'));
+const Design = lazy(() => import('./routes/design'));
 
 initializeSentry();
 initializeLogging();
@@ -24,8 +28,53 @@ initializeLogging();
 document.body.setAttribute('data-platform', process.platform);
 document.title = getProductName();
 
-(async function() {
-  await db.initClient();
+const router = createMemoryRouter(
+  // @TODO - Investigate file based routing to generate these routes:
+  [
+    {
+      path: '/',
+      element: <Root />,
+      errorElement: <div>Error</div>,
+      children: [
+        {
+          path: ACTIVITY_HOME,
+          element: (
+            <Suspense fallback={<AppLoadingIndicator />}>
+              <Project />
+            </Suspense>
+          ),
+        },
+        {
+          path: ACTIVITY_DEBUG,
+          element: (
+            <Suspense fallback={<AppLoadingIndicator />}>
+              <Debug />
+            </Suspense>
+          ),
+        },
+        {
+          path: ACTIVITY_SPEC,
+          element: (
+            <Suspense fallback={<AppLoadingIndicator />}>
+              <Design />
+            </Suspense>
+          ),
+        },
+        {
+          path: ACTIVITY_UNIT_TEST,
+          element: (
+            <Suspense fallback={<AppLoadingIndicator />}>
+              <UnitTest />
+            </Suspense>
+          ),
+        },
+      ],
+    },
+  ]
+);
+
+async function renderApp() {
+  await database.initClient();
 
   await initPlugins();
 
@@ -40,41 +89,25 @@ document.title = getProductName();
   // Create Redux store
   const store = await initStore();
 
-  const render = (App: React.ComponentType<any>) => {
-    ReactDOM.render(
-      <Provider store={store}>
-        <Router>
-          <App />
-        </Router>
-      </Provider>,
-      document.getElementById('root'),
-    );
-  };
+  const root = document.getElementById('root');
 
-  render(App);
-})();
+  if (!root) {
+    throw new Error('Could not find root element');
+  }
+
+  ReactDOM.createRoot(root).render(
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
+  );
+}
+
+renderApp();
 
 // Export some useful things for dev
 if (isDevelopment()) {
   // @ts-expect-error -- TSCONVERSION needs window augmentation
   window.models = models;
   // @ts-expect-error -- TSCONVERSION needs window augmentation
-  window.db = db;
+  window.db = database;
 }
-
-function showUpdateNotification() {
-  console.log('[app] Update Available');
-  // eslint-disable-next-line no-new
-  new window.Notification('Insomnia Update Ready', {
-    body: 'Relaunch the app for it to take effect',
-    silent: true,
-    // @ts-expect-error -- TSCONVERSION
-    sticky: true,
-  });
-}
-
-ipcRenderer.on('update-available', () => {
-  // Give it a few seconds before showing this. Sometimes, when
-  // you relaunch too soon it doesn't work the first time.
-  setTimeout(showUpdateNotification, 1000 * 10);
-});

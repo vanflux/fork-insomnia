@@ -1,6 +1,5 @@
 import { EnvironmentHighlightColorStyle, HttpVersion, HttpVersions, UpdateChannel } from 'insomnia-common';
-import { Tooltip } from 'insomnia-components';
-import React, { FC, Fragment, useCallback } from 'react';
+import React, { FC, Fragment } from 'react';
 import { useSelector } from 'react-redux';
 
 import {
@@ -21,6 +20,7 @@ import { selectSettings, selectStats } from '../../redux/selectors';
 import { Link } from '../base/link';
 import { CheckForUpdatesButton } from '../check-for-updates-button';
 import { HelpTooltip } from '../help-tooltip';
+import { Tooltip } from '../tooltip';
 import { BooleanSetting } from './boolean-setting';
 import { EnumSetting } from './enum-setting';
 import { MaskedSetting } from './masked-setting';
@@ -42,11 +42,6 @@ const RestartTooltip: FC<{ message: string }> = ({ message }) => (
 
 const DevelopmentOnlySettings: FC = () => {
   const { launches } = useSelector(selectStats);
-
-  const onChangeLaunches = useCallback(async event => {
-    const launches = parseInt(event.target.value, 10);
-    await models.stats.update({ launches });
-  }, []);
 
   if (!isDevelopment()) {
     return null;
@@ -73,7 +68,10 @@ const DevelopmentOnlySettings: FC = () => {
               value={String(launches)}
               min={0}
               name="launches"
-              onChange={onChangeLaunches}
+              onChange={async event => {
+                const launches = parseInt(event.target.value, 10);
+                await models.stats.update({ launches });
+              }}
               type={'number'}
             />
           </label>

@@ -1,5 +1,4 @@
 import clone from 'clone';
-import { SvgIcon } from 'insomnia-components';
 import { lookup } from 'mime-types';
 import React, { FC, useCallback } from 'react';
 
@@ -12,11 +11,10 @@ import {
 } from '../../../../common/constants';
 import { documentationLinks } from '../../../../common/documentation';
 import { getContentTypeHeader } from '../../../../common/misc';
-import { update } from '../../../../models/helpers/request-operations';
+import * as models from '../../../../models';
 import type {
   Request,
   RequestBodyParameter,
-  RequestHeader,
 } from '../../../../models/request';
 import {
   newBodyFile,
@@ -30,6 +28,7 @@ import { NunjucksEnabledProvider } from '../../../context/nunjucks/nunjucks-enab
 import { AskModal } from '../../modals/ask-modal';
 import { showModal } from '../../modals/index';
 import { EmptyStatePane } from '../../panes/empty-state-pane';
+import { SvgIcon } from '../../svg-icon';
 import { FileEditor } from './file-editor';
 import { FormEditor } from './form-editor';
 import { GraphQLEditor } from './graph-ql-editor';
@@ -37,7 +36,6 @@ import { RawEditor } from './raw-editor';
 import { UrlEncodedEditor } from './url-encoded-editor';
 
 interface Props {
-  onChangeHeaders: (r: Request, headers: RequestHeader[]) => Promise<Request>;
   request: Request;
   workspace: Workspace;
   settings: Settings;
@@ -45,7 +43,6 @@ interface Props {
 }
 
 export const BodyEditor: FC<Props> = ({
-  onChangeHeaders,
   request,
   workspace,
   settings,
@@ -54,28 +51,28 @@ export const BodyEditor: FC<Props> = ({
   const handleRawChange = useCallback((rawValue: string) => {
     const oldContentType = request.body.mimeType || '';
     const body = newBodyRaw(rawValue, oldContentType);
-    update(request, { body });
+    models.request.update(request, { body });
   }, [request]);
 
   const handleGraphQLChange = useCallback((content: string) => {
     const body = newBodyRaw(content, CONTENT_TYPE_GRAPHQL);
-    update(request, { body });
+    models.request.update(request, { body });
   }, [request]);
 
   const handleFormUrlEncodedChange = useCallback((parameters: RequestBodyParameter[]) => {
     const body = newBodyFormUrlEncoded(parameters);
-    update(request, { body });
+    models.request.update(request, { body });
   }, [request]);
 
   const handleFormChange = useCallback((parameters: RequestBodyParameter[]) => {
     const body = newBodyForm(parameters);
-    update(request, { body });
+    models.request.update(request, { body });
   }, [request]);
 
   const handleFileChange = async (path: string) => {
     const headers = clone(request.headers);
     const body = newBodyFile(path);
-    const newRequest = await update(request, { body });
+    const newRequest = await models.request.update(request, { body });
     let contentTypeHeader = getContentTypeHeader(headers);
 
     if (!contentTypeHeader) {
@@ -100,7 +97,7 @@ export const BodyEditor: FC<Props> = ({
         </p>,
         onDone: (saidYes: boolean) => {
           if (saidYes) {
-            onChangeHeaders(newRequest, headers);
+            models.request.update(newRequest, { headers });
           }
         },
       });
@@ -121,7 +118,7 @@ export const BodyEditor: FC<Props> = ({
     } else if (mimeType === CONTENT_TYPE_FILE) {
       return <FileEditor key={uniqueKey} onChange={handleFileChange} path={fileName || ''} />;
     } else if (mimeType === CONTENT_TYPE_GRAPHQL) {
-      return <GraphQLEditor key={uniqueKey} uniquenessKey={uniqueKey} request={request} content={request.body.text || ''} workspace={workspace} settings={settings} environmentId={environmentId} onChange={handleGraphQLChange} />;
+      return <GraphQLEditor key={uniqueKey} uniquenessKey={uniqueKey} request={request} settings={settings} workspaceId={workspace._id} environmentId={environmentId} onChange={handleGraphQLChange} />;
     } else if (!isBodyEmpty) {
       const contentType = getContentTypeFromHeaders(request.headers) || mimeType;
       return <RawEditor uniquenessKey={uniqueKey} contentType={contentType || 'text/plain'} content={request.body.text || ''} onChange={handleRawChange} />;

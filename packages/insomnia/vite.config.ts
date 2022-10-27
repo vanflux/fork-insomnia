@@ -35,6 +35,11 @@ export default defineConfig(({ mode }) => {
       'process.env.NODE_ENV': JSON.stringify(mode),
       'process.env.INSOMNIA_ENV': JSON.stringify(mode),
     },
+    resolve: {
+      alias: {
+        'url': path.join(__dirname, 'src', 'url.shim.js'),
+      },
+    },
     optimizeDeps: {
       exclude: commonjsPackages,
     },
@@ -62,7 +67,6 @@ export default defineConfig(({ mode }) => {
         babel: {
           plugins: [
             // We need to have these plugins installed in our dependencies
-            ['@babel/plugin-proposal-decorators', { legacy: true }],
             ['@babel/plugin-proposal-class-properties', { loose: true }],
           ],
         },

@@ -5,7 +5,6 @@ import React, { forwardRef, useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { exportHarRequest } from '../../../common/har';
-import { hotKeyRefs } from '../../../common/hotkeys';
 import { RENDER_PURPOSE_NO_RENDER } from '../../../common/render';
 import type { Environment } from '../../../models/environment';
 import { GrpcRequest } from '../../../models/grpc-request';
@@ -26,7 +25,8 @@ import { DropdownDivider } from '../base/dropdown/dropdown-divider';
 import { DropdownHint } from '../base/dropdown/dropdown-hint';
 import { DropdownItem } from '../base/dropdown/dropdown-item';
 import { PromptButton } from '../base/prompt-button';
-import { showError, showModal } from '../modals';
+import { showError, showModal, showPrompt } from '../modals';
+import { AlertModal } from '../modals/alert-modal';
 import { GenerateCodeModal } from '../modals/generate-code-modal';
 
 interface Props extends Pick<DropdownProps, 'right'> {
@@ -90,20 +90,39 @@ export const RequestActionsDropdown = forwardRef<DropdownHandle, Props>(({
   }, [handleDuplicateRequest, request]);
 
   const generateCode = useCallback(() => {
-    showModal(GenerateCodeModal, request);
+    showModal(GenerateCodeModal, { request });
   }, [request]);
 
   const copyAsCurl = useCallback(async () => {
-    const environmentId = activeEnvironment ? activeEnvironment._id : 'n/a';
-    const har = await exportHarRequest(request._id, environmentId);
-    const snippet = new HTTPSnippet(har);
-    const cmd = snippet.convert('shell', 'curl');
+    try {
+      const environmentId = activeEnvironment ? activeEnvironment._id : 'n/a';
+      const har = await exportHarRequest(request._id, environmentId);
+      const snippet = new HTTPSnippet(har);
+      const cmd = snippet.convert('shell', 'curl');
 
-    // @TODO Should we throw otherwise? What should happen if we cannot find cmd?
-    if (cmd) {
-      clipboard.writeText(cmd);
+      if (cmd) {
+        clipboard.writeText(cmd);
+      }
+    } catch (err) {
+      showModal(AlertModal, {
+        title: 'Could not generate cURL',
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
     }
   }, [activeEnvironment, request._id]);
+
+  const handleRename = useCallback(() => {
+    showPrompt({
+      title: 'Rename Request',
+      defaultValue: request.name,
+      submitName: 'Rename',
+      selectText: true,
+      label: 'Name',
+      onComplete: name => {
+        requestOperations.update(request, { name });
+      },
+    });
+  }, [request]);
 
   const togglePin = useCallback(() => {
     updateRequestMetaByParentId(request._id, { pinned: !isPinned });
@@ -124,21 +143,21 @@ export const RequestActionsDropdown = forwardRef<DropdownHandle, Props>(({
 
       <DropdownItem onClick={duplicate}>
         <i className="fa fa-copy" /> Duplicate
-        <DropdownHint keyBindings={hotKeyRegistry[hotKeyRefs.REQUEST_SHOW_DUPLICATE.id]} />
+        <DropdownHint keyBindings={hotKeyRegistry.request_showDuplicate} />
       </DropdownItem>
 
       {canGenerateCode && (
         <DropdownItem onClick={generateCode}>
           <i className="fa fa-code" /> Generate Code
           <DropdownHint
-            keyBindings={hotKeyRegistry[hotKeyRefs.REQUEST_SHOW_GENERATE_CODE_EDITOR.id]}
+            keyBindings={hotKeyRegistry.request_showGenerateCodeEditor}
           />
         </DropdownItem>
       )}
 
       <DropdownItem onClick={togglePin}>
         <i className="fa fa-thumb-tack" /> {isPinned ? 'Unpin' : 'Pin'}
-        <DropdownHint keyBindings={hotKeyRegistry[hotKeyRefs.REQUEST_TOGGLE_PIN.id]} />
+        <DropdownHint keyBindings={hotKeyRegistry.request_togglePin} />
       </DropdownItem>
 
       {canGenerateCode && (
@@ -148,20 +167,24 @@ export const RequestActionsDropdown = forwardRef<DropdownHandle, Props>(({
       )}
 
       <DropdownItem
+        onClick={handleRename}
+      >
+        <i className="fa fa-edit" /> Rename
+      </DropdownItem>
+
+      <DropdownItem
         buttonClass={PromptButton}
         onClick={deleteRequest}
-        addIcon
       >
         <i className="fa fa-trash-o" /> Delete
-        <DropdownHint keyBindings={hotKeyRegistry[hotKeyRefs.REQUEST_SHOW_DELETE.id]} />
+        <DropdownHint keyBindings={hotKeyRegistry.request_showDelete} />
       </DropdownItem>
 
       {actionPlugins.length > 0 && <DropdownDivider>Plugins</DropdownDivider>}
       {actionPlugins.map((plugin: RequestAction) => (
         <DropdownItem
           key={`${plugin.plugin.name}::${plugin.label}`}
-          value={plugin}
-          onClick={handlePluginClick}
+          onClick={() => handlePluginClick(plugin)}
           stayOpenAfterClick
         >
           {loadingActions[plugin.label] ? (
@@ -177,7 +200,7 @@ export const RequestActionsDropdown = forwardRef<DropdownHandle, Props>(({
 
       <DropdownItem onClick={handleShowSettings}>
         <i className="fa fa-wrench" /> Settings
-        <DropdownHint keyBindings={hotKeyRegistry[hotKeyRefs.REQUEST_SHOW_SETTINGS.id]} />
+        <DropdownHint keyBindings={hotKeyRegistry.request_showSettings} />
       </DropdownItem>
     </Dropdown>
   );

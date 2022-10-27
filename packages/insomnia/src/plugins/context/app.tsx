@@ -66,7 +66,6 @@ export interface PrivateProperties {
   axios: typeof axios;
   analytics: typeof analytics;
   loadRendererModules: () => Promise<{
-    insomniaComponents: any;
     ReactDOM: typeof ReactDOM;
     React: typeof React;
   } | {}>;
@@ -130,10 +129,6 @@ export function init(renderPurpose: RenderPurpose = RENDER_PURPOSE_GENERAL): {
             title,
             ...(options || ({} as Record<string, any>)),
 
-            onCancel() {
-              reject(new Error(`Prompt ${title} cancelled`));
-            },
-
             onComplete(value: string) {
               shouldResolve = true;
               resolveWith = value;
@@ -144,6 +139,7 @@ export function init(renderPurpose: RenderPurpose = RENDER_PURPOSE_GENERAL): {
               if (shouldResolve && resolveWith !== null) {
                 resolve(resolveWith);
               }
+              reject(new Error(`Prompt ${title} cancelled`));
             },
           });
         });
@@ -229,12 +225,10 @@ export function init(renderPurpose: RenderPurpose = RENDER_PURPOSE_GENERAL): {
 
         const ReactDOM = await import('react-dom');
         const React = await import('react');
-        const insomniaComponents = await import('insomnia-components');
 
         return {
           ReactDOM,
           React,
-          insomniaComponents,
         };
       },
     },

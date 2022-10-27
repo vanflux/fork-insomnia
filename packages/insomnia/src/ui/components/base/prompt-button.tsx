@@ -8,14 +8,10 @@ import React, {
   useState,
 } from 'react';
 
-import { Button } from './button';
-
 type PromptStateEnum = 'default' | 'ask' | 'done';
 
 interface Props<T> {
-  value?: T;
   className?: string;
-  addIcon?: boolean;
   disabled?: boolean;
   confirmMessage?: string;
   doneMessage?: string;
@@ -26,11 +22,9 @@ interface Props<T> {
 
 export const PromptButton = <T, >({
   onClick,
-  addIcon,
   disabled,
   confirmMessage = 'Click to confirm',
   doneMessage = 'Done',
-  value,
   tabIndex,
   title,
   className,
@@ -50,55 +44,41 @@ export const PromptButton = <T, >({
     };
   }, []);
 
-  const handleConfirm = (event: MouseEvent<HTMLButtonElement>) => {
-    if (triggerTimeout.current !== null) {
-      // Clear existing timeouts
-      clearTimeout(triggerTimeout.current);
-    }
-
-    // Fire the click handler
-    onClick?.(event, value);
-
-    // Set the state to done (but delay a bit to not alarm user)
-    // using global.setTimeout to force use of the Node timeout rather than DOM timeout
-    doneTimeout.current = global.setTimeout(() => {
-      setState('done');
-    }, 100);
-    // Set a timeout to hide the confirmation
-    // using global.setTimeout to force use of the Node timeout rather than DOM timeout
-    triggerTimeout.current = global.setTimeout(() => {
-      setState('default');
-
-      // Fire the click handler
-      onClick?.(event, value);
-    }, 2000);
-  };
-
-  const handleAsk = (event: MouseEvent<HTMLButtonElement>) => {
-    // Prevent events (ex. won't close dropdown if it's in one)
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Toggle the confirmation notice
-    setState('ask');
-
-    // Set a timeout to hide the confirmation
-    // using global.setTimeout to force use of the Node timeout rather than DOM timeout
-    triggerTimeout.current = global.setTimeout(() => {
-      setState('default');
-    }, 2000);
-  };
-
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    if (state === 'default') {
+      // Prevent events (ex. won't close dropdown if it's in one)
+      event.preventDefault();
+      event.stopPropagation();
+      // Toggle the confirmation notice
+      setState('ask');
+      // Set a timeout to hide the confirmation
+      // using global.setTimeout to force use of the Node timeout rather than DOM timeout
+      triggerTimeout.current = global.setTimeout(() => {
+        setState('default');
+      }, 2000);
+    }
     if (state === 'ask') {
-      handleConfirm(event);
-    } else if (state === 'default') {
-      handleAsk(event);
+      if (triggerTimeout.current !== null) {
+        // Clear existing timeouts
+        clearTimeout(triggerTimeout.current);
+      }
+      // Fire the click handler
+      onClick?.(event);
+      // Set the state to done (but delay a bit to not alarm user)
+      // using global.setTimeout to force use of the Node timeout rather than DOM timeout
+      doneTimeout.current = global.setTimeout(() => {
+        setState('done');
+      }, 100);
+      // Set a timeout to hide the confirmation
+      // using global.setTimeout to force use of the Node timeout rather than DOM timeout
+      triggerTimeout.current = global.setTimeout(() => {
+        setState('default');
+      }, 2000);
     }
   };
 
   return (
-    <Button
+    <button
       onClick={handleClick}
       disabled={disabled}
       tabIndex={tabIndex}
@@ -109,26 +89,24 @@ export const PromptButton = <T, >({
         promptState={state}
         confirmMessage={confirmMessage}
         doneMessage={doneMessage}
-        addIcon={Boolean(addIcon)}
       >
         {children}
       </PromptMessage>
-    </Button>
+    </button>
   );
 };
 
 interface PromptMessageProps {
   promptState: PromptStateEnum;
-  addIcon: boolean;
   confirmMessage?: string;
   doneMessage?: string;
   children: ReactNode;
 }
-const PromptMessage: FunctionComponent<PromptMessageProps> = ({ promptState, addIcon, confirmMessage, doneMessage, children }) => {
+const PromptMessage: FunctionComponent<PromptMessageProps> = ({ promptState, confirmMessage, doneMessage, children }) => {
   if (promptState === 'ask') {
     return (
       <span className='warning' title='Click again to confirm'>
-        {addIcon && <i className='fa fa-exclamation-circle' />}
+        <i className='fa fa-exclamation-circle' />
         {confirmMessage && (
           <span className='space-left'>{confirmMessage}</span>
         )}

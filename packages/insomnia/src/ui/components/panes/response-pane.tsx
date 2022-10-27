@@ -13,8 +13,8 @@ import * as models from '../../../models';
 import type { Request } from '../../../models/request';
 import type { Response } from '../../../models/response';
 import { cancelRequestById } from '../../../network/network';
+import { updateRequestMetaByParentId } from '../../hooks/create-request';
 import { selectActiveResponse, selectLoadStartTime, selectResponseFilter, selectResponseFilterHistory, selectResponsePreviewMode, selectSettings } from '../../redux/selectors';
-import { Button } from '../base/button';
 import { PreviewModeDropdown } from '../dropdowns/preview-mode-dropdown';
 import { ResponseHistoryDropdown } from '../dropdowns/response-history-dropdown';
 import { ErrorBoundary } from '../error-boundary';
@@ -32,22 +32,35 @@ import { Pane, paneBodyClasses, PaneHeader } from './pane';
 import { PlaceholderResponsePane } from './placeholder-response-pane';
 
 interface Props {
-  handleSetFilter: (filter: string) => void;
-  handleSetActiveResponse: (requestId: string, activeResponse: Response | null) => void;
   request?: Request | null;
 }
 export const ResponsePane: FC<Props> = ({
-  handleSetFilter,
-  handleSetActiveResponse,
   request,
 }) => {
-  const response = useSelector(selectActiveResponse);
+  const response = useSelector(selectActiveResponse) as Response | null;
   const filterHistory = useSelector(selectResponseFilterHistory);
   const filter = useSelector(selectResponseFilter);
   const settings = useSelector(selectSettings);
   const loadStartTime = useSelector(selectLoadStartTime);
   const previewMode = useSelector(selectResponsePreviewMode);
-
+  const handleSetFilter = async (responseFilter: string) => {
+    if (!response) {
+      return;
+    }
+    const requestId = response.parentId;
+    await updateRequestMetaByParentId(requestId, { responseFilter });
+    const meta = await models.requestMeta.getByParentId(requestId);
+    if (!meta) {
+      return;
+    }
+    const responseFilterHistory = meta.responseFilterHistory.slice(0, 10);
+    // Already in history or empty?
+    if (!responseFilter || responseFilterHistory.includes(responseFilter)) {
+      return;
+    }
+    responseFilterHistory.unshift(responseFilter);
+    updateRequestMetaByParentId(requestId, { responseFilterHistory });
+  };
   const handleGetResponseBody = useCallback(() => {
     if (!response) {
       return null;
@@ -60,7 +73,6 @@ export const ResponsePane: FC<Props> = ({
       clipboard.writeText(bodyBuffer.toString('utf8'));
     }
   }, [handleGetResponseBody]);
-
   const handleDownloadResponseBody = useCallback(async (prettify: boolean) => {
     if (!response || !request) {
       console.warn('Nothing to download');
@@ -122,7 +134,7 @@ export const ResponsePane: FC<Props> = ({
       </PlaceholderResponsePane>
     );
   }
-
+  const timeline = models.response.getTimeline(response);
   const cookieHeaders = getSetCookieHeaders(response.headers);
   return (
     <Pane type="response">
@@ -135,7 +147,6 @@ export const ResponsePane: FC<Props> = ({
           </div>
           <ResponseHistoryDropdown
             activeResponse={response}
-            handleSetActiveResponse={handleSetActiveResponse}
             requestId={request._id}
             className="tall pane__header__right"
           />
@@ -153,23 +164,23 @@ export const ResponsePane: FC<Props> = ({
             />
           </Tab>
           <Tab tabIndex="-1">
-            <Button>
-              Header{' '}
+            <button>
+              Headers{' '}
               {response.headers.length > 0 && (
                 <span className="bubble">{response.headers.length}</span>
               )}
-            </Button>
+            </button>
           </Tab>
           <Tab tabIndex="-1">
-            <Button>
-              Cookie{' '}
+            <button>
+              Cookies{' '}
               {cookieHeaders.length ? (
                 <span className="bubble">{cookieHeaders.length}</span>
               ) : null}
-            </Button>
+            </button>
           </Tab>
           <Tab tabIndex="-1">
-            <Button>Timeline</Button>
+            <button>Timeline</button>
           </Tab>
         </TabList>
         <TabPanel className="react-tabs__tab-panel">
@@ -212,7 +223,8 @@ export const ResponsePane: FC<Props> = ({
         <TabPanel className="react-tabs__tab-panel">
           <ErrorBoundary key={response._id} errorClassName="font-error pad text-center">
             <ResponseTimelineViewer
-              response={response}
+              key={response._id}
+              timeline={timeline}
             />
           </ErrorBoundary>
         </TabPanel>

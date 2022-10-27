@@ -15,6 +15,7 @@ import {
   CONTENT_TYPE_YAML,
   getContentTypeName,
 } from '../../../common/constants';
+import { isWebSocketRequest } from '../../../models/websocket-request';
 import { selectActiveRequest } from '../../redux/selectors';
 import { Dropdown } from '../base/dropdown/dropdown';
 import { DropdownButton } from '../base/dropdown/dropdown-button';
@@ -38,7 +39,9 @@ const MimeTypeItem: FC<{
   mimeType,
   onChange,
 }) => {
-  const activeRequest = useSelector(selectActiveRequest);
+  const request = useSelector(selectActiveRequest);
+  const activeRequest = request && !isWebSocketRequest(request) ? request : null;
+
   const handleChangeMimeType = useCallback(async (mimeType: string | null) => {
     if (!activeRequest) {
       return;
@@ -82,7 +85,7 @@ const MimeTypeItem: FC<{
   const contentTypeFallback = typeof contentType === 'string' ? contentType : EMPTY_MIME_TYPE;
   const iconClass = mimeType === contentTypeFallback ? 'fa-check' : 'fa-empty';
   return (
-    <DropdownItem onClick={handleChangeMimeType} value={mimeType}>
+    <DropdownItem onClick={() => handleChangeMimeType(mimeType)}>
       <i className={`fa ${iconClass}`} />
       {forcedName || getContentTypeName(mimeType, true)}
     </DropdownItem>
@@ -91,7 +94,8 @@ const MimeTypeItem: FC<{
 MimeTypeItem.displayName = DropdownItem.name;
 
 export const ContentTypeDropdown: FC<Props> = ({ onChange }) => {
-  const activeRequest = useSelector(selectActiveRequest);
+  const request = useSelector(selectActiveRequest);
+  const activeRequest = request && !isWebSocketRequest(request) ? request : null;
 
   if (!activeRequest) {
     return null;

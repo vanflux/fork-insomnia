@@ -1,14 +1,11 @@
-import { HotKeyRegistry } from 'insomnia-common';
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 
 import * as session from '../../../account/session';
 import { getAppVersion, getProductName } from '../../../common/constants';
-import * as models from '../../../models/index';
 import { selectSettings } from '../../redux/selectors';
-import { Button } from '../base/button';
-import { Modal, ModalProps } from '../base/modal';
+import { type ModalHandle, Modal, ModalProps } from '../base/modal';
 import { ModalBody } from '../base/modal-body';
 import { ModalHeader } from '../base/modal-header';
 import { Account } from '../settings/account';
@@ -20,39 +17,32 @@ import { ThemePanel } from '../settings/theme-panel';
 import { showModal } from './index';
 export interface SettingsModalHandle {
   hide: () => void;
-  show: (currentTabIndex?: number) => void;
+  show: (options?: { tab?: number }) => void;
 }
 
 export const TAB_INDEX_EXPORT = 1;
 export const TAB_INDEX_SHORTCUTS = 3;
 export const TAB_INDEX_THEMES = 2;
 export const TAB_INDEX_PLUGINS = 5;
-export const displayName = 'SettingsModal';
 export const SettingsModal = forwardRef<SettingsModalHandle, ModalProps>((props, ref) => {
   const settings = useSelector(selectSettings);
   const [currentTabIndex, setCurrentTabIndex] = useState<number | null>(null);
-  const modalRef = useRef<Modal>(null);
+  const modalRef = useRef<ModalHandle>(null);
   const email = session.isLoggedIn() ? session.getFullName() : null;
 
-  const handleUpdateKeyBindings = async (hotKeyRegistry: HotKeyRegistry) => {
-    await models.settings.update(settings, {
-      hotKeyRegistry,
-    });
-  };
-
   useImperativeHandle(ref, () => ({
-    hide(): void {
+    hide: () => {
       modalRef.current?.hide();
     },
-    show(currentTabIndex = 0): void {
-      const tabIndex = typeof currentTabIndex !== 'number' ? 0 : currentTabIndex;
+    show: options => {
+      const tabIndex = typeof options?.tab !== 'number' ? 0 : options.tab;
       setCurrentTabIndex(tabIndex);
       modalRef.current?.show();
     },
   }), []);
 
   return (
-    <Modal ref={modalRef} tall freshState {...props}>
+    <Modal ref={modalRef} tall {...props}>
       <ModalHeader>
         {getProductName()} Preferences
         <span className="faint txt-sm">
@@ -64,22 +54,22 @@ export const SettingsModal = forwardRef<SettingsModalHandle, ModalProps>((props,
         <Tabs className="react-tabs" defaultIndex={currentTabIndex ?? undefined}>
           <TabList>
             <Tab tabIndex="-1">
-              <Button value="General">General</Button>
+              <button value="General">General</button>
             </Tab>
             <Tab tabIndex="-1">
-              <Button value="Import/Export">Data</Button>
+              <button value="Import/Export">Data</button>
             </Tab>
             <Tab tabIndex="-1">
-              <Button value="Themes">Themes</Button>
+              <button value="Themes">Themes</button>
             </Tab>
             <Tab tabIndex="-1">
-              <Button value="Shortcuts">Keyboard</Button>
+              <button value="Shortcuts">Keyboard</button>
             </Tab>
             <Tab tabIndex="-1">
-              <Button value="Account">Account</Button>
+              <button value="Account">Account</button>
             </Tab>
             <Tab tabIndex="-1">
-              <Button value="Plugins">Plugins</Button>
+              <button value="Plugins">Plugins</button>
             </Tab>
           </TabList>
           <TabPanel className="react-tabs__tab-panel pad scrollable">
@@ -92,9 +82,7 @@ export const SettingsModal = forwardRef<SettingsModalHandle, ModalProps>((props,
             <ThemePanel />
           </TabPanel>
           <TabPanel className="react-tabs__tab-panel pad scrollable">
-            <Shortcuts
-              handleUpdateKeyBindings={handleUpdateKeyBindings}
-            />
+            <Shortcuts />
           </TabPanel>
           <TabPanel className="react-tabs__tab-panel pad scrollable">
             <Account />
@@ -107,5 +95,5 @@ export const SettingsModal = forwardRef<SettingsModalHandle, ModalProps>((props,
     </Modal>
   );
 });
-SettingsModal.displayName = displayName;
+SettingsModal.displayName = 'SettingsModal';
 export const showSettingsModal = () => showModal(SettingsModal);

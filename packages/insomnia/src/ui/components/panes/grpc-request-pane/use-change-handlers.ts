@@ -5,14 +5,14 @@ import type { GrpcRequest, GrpcRequestHeader } from '../../../../models/grpc-req
 import type { GrpcDispatch } from '../../../context/grpc';
 import { grpcActions } from '../../../context/grpc';
 import { showModal } from '../../modals';
-import ProtoFilesModal from '../../modals/proto-files-modal';
+import { ProtoFilesModal } from '../../modals/proto-files-modal';
 
 interface ChangeHandlers {
   url: (arg0: string) => Promise<void>;
   body: (arg0: string) => Promise<void>;
   method: (arg0: string) => Promise<void>;
   metadata: (arg0: GrpcRequestHeader[]) => Promise<void>;
-  protoFile: (arg0: string) => Promise<void>;
+  protoFile: () => Promise<void>;
 }
 
 // This will create memoized change handlers for the url, body and method selection
@@ -45,7 +45,7 @@ const useChangeHandlers = (request: GrpcRequest, dispatch: GrpcDispatch): Change
 
     const protoFile = async () => {
       showModal(ProtoFilesModal, {
-        preselectProtoFileId: request.protoFileId,
+        selected: request.protoFileId,
         onSave: async (protoFileId: string) => {
           if (request.protoFileId !== protoFileId) {
             const initial = models.grpcRequest.init();

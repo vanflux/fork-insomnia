@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 
 import { database as db } from '../../../common/database';
 import { getWorkspaceLabel } from '../../../common/get-workspace-label';
-import { hotKeyRefs } from '../../../common/hotkeys';
 import { RENDER_PURPOSE_NO_RENDER } from '../../../common/render';
 import { isRequest } from '../../../models/request';
 import { isRequestGroup } from '../../../models/request-group';
@@ -78,7 +77,7 @@ export const WorkspaceDropdown: FC = () => {
   }, []);
 
   const handleShowExport = useCallback(() => {
-    showModal(SettingsModal, TAB_INDEX_EXPORT);
+    showModal(SettingsModal, { tab: TAB_INDEX_EXPORT });
   }, []);
 
   const handleShowWorkspaceSettings = useCallback(() => {
@@ -122,7 +121,7 @@ export const WorkspaceDropdown: FC = () => {
       </DropdownButton>
       <DropdownItem onClick={handleShowWorkspaceSettings}>
         <i className="fa fa-wrench" /> {getWorkspaceLabel(activeWorkspace).singular} Settings
-        <DropdownHint keyBindings={hotKeyRegistry[hotKeyRefs.WORKSPACE_SHOW_SETTINGS.id]} />
+        <DropdownHint keyBindings={hotKeyRegistry.workspace_showSettings} />
       </DropdownItem>
 
       <DropdownItem onClick={handleShowExport}>
@@ -151,8 +150,7 @@ export const WorkspaceDropdown: FC = () => {
           {configGeneratorPlugins.map((p: ConfigGenerator) => (
             <DropdownItem
               key="generateConfig"
-              onClick={handleGenerateConfig}
-              value={p.label}
+              onClick={() => handleGenerateConfig(p.label)}
             >
               <i className="fa fa-code" />
               {p.label}

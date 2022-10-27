@@ -3,17 +3,20 @@ import React, { FC, useCallback } from 'react';
 import { getCommonHeaderNames, getCommonHeaderValues } from '../../../common/common-headers';
 import { update } from '../../../models/helpers/request-operations';
 import type { Request, RequestHeader } from '../../../models/request';
+import { isWebSocketRequest, WebSocketRequest } from '../../../models/websocket-request';
 import { CodeEditor } from '../codemirror/code-editor';
 import { KeyValueEditor } from '../key-value-editor/key-value-editor';
 
 interface Props {
   bulk: boolean;
-  request: Request;
+  isDisabled?: boolean;
+  request: Request | WebSocketRequest;
 }
 
 export const RequestHeadersEditor: FC<Props> = ({
   request,
   bulk,
+  isDisabled,
 }) => {
   const handleBulkUpdate = useCallback((headersString: string) => {
     const headers: {
@@ -71,19 +74,16 @@ export const RequestHeadersEditor: FC<Props> = ({
   }
 
   return (
-    <div className="pad-bottom scrollable-container">
-      <div className="scrollable">
-        <KeyValueEditor
-          sortable
-          namePlaceholder="header"
-          valuePlaceholder="value"
-          descriptionPlaceholder="description"
-          pairs={request.headers}
-          handleGetAutocompleteNameConstants={getCommonHeaderNames}
-          handleGetAutocompleteValueConstants={getCommonHeaderValues}
-          onChange={onChangeHeaders}
-        />
-      </div>
-    </div>
+    <KeyValueEditor
+      namePlaceholder="header"
+      valuePlaceholder="value"
+      descriptionPlaceholder="description"
+      pairs={request.headers}
+      handleGetAutocompleteNameConstants={getCommonHeaderNames}
+      handleGetAutocompleteValueConstants={getCommonHeaderValues}
+      onChange={onChangeHeaders}
+      isDisabled={isDisabled}
+      isWebSocketRequest={isWebSocketRequest(request)}
+    />
   );
 };
