@@ -1,5 +1,6 @@
 import express from 'express';
 import { graphqlHTTP } from 'express-graphql';
+import sanitizeHtml from 'sanitize-html';
 
 import { basicAuthRouter } from './basic-auth';
 import githubApi from './github-api';
@@ -7,7 +8,6 @@ import gitlabApi from './gitlab-api';
 import { root, schema } from './graphql';
 import { startGRPCServer } from './grpc';
 import { oauthRoutes } from './oauth';
-import sanitizeHtml from "sanitize-html";
 
 const app = express();
 const port = 4010;
