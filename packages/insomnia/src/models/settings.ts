@@ -77,6 +77,7 @@ export function init(): BaseSettings {
     updateAutomatically: true,
     updateChannel: UpdateChannel.stable,
     useBulkHeaderEditor: false,
+    showGithubStars: false,
     useBulkParametersEditor: false,
     validateAuthSSL: true,
     validateSSL: true,
