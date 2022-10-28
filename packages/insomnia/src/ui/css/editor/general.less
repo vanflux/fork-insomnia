@@ -11,7 +11,7 @@
   &[data-editor-type='password'] .CodeMirror-line {
     -webkit-text-security: disc;
 
-    // NOTE: <span cm-text> appears with hidden character when editor is empty
+    /*  NOTE: <span cm-text> appears with hidden character when editor is empty */
     [cm-text=''],
     .CodeMirror-widget {
       -webkit-text-security: none;
@@ -75,10 +75,10 @@
 
   .CodeMirror,
   .cm-s-seti.CodeMirror,
-  // Hack because seti theme is dumb
+  /* Hack because seti theme is dumb */
   .CodeMirror-scrollbar-filler,
   .CodeMirror-gutter-filler {
-    // Let the background behind show through
+    /* Let the background behind show through */
     background-color: transparent !important;
     border: 0;
   }
@@ -112,14 +112,15 @@
   }
 
   .CodeMirror-scroll {
-    cursor: text; // Show text cursor everywhere (not just in .Codemirror-lines)
+    cursor: text;
+    /*  Show text cursor everywhere (not just in .Codemirror-lines)*/
   }
 
   .CodeMirror-lines {
-    // Scroll past the end
+    /*  Scroll past the end */ 
     padding-bottom: 30px;
 
-    // Has to be nested to have higher precedence than default style
+    /* Has to be nested to have higher precedence than default style */ 
     .CodeMirror-placeholder {
       color: var(--hl-lg);
     }
@@ -136,7 +137,7 @@
       color: var(--color-danger);
       text-align: center;
       width: 100%;
-      font-size: 0.7em; // because the circle is so large
+      font-size: 0.7em; /*  because the circle is so large */
       content: '⬤';
     }
   }
