@@ -7,13 +7,14 @@ import gitlabApi from './gitlab-api';
 import { root, schema } from './graphql';
 import { startGRPCServer } from './grpc';
 import { oauthRoutes } from './oauth';
+import sanitizeHtml from "sanitize-html";
 
 const app = express();
 const port = 4010;
 const grpcPort = 50051;
 
 app.get('/pets/:id', (req, res) => {
-  res.status(200).send({ id: req.params.id });
+  res.status(200).send({ id: sanitizeHtml(req.params.id) });
 });
 
 app.get('/sleep', (_req, res) => {
