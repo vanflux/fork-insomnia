@@ -80,6 +80,7 @@ export interface Settings {
   updateAutomatically: boolean;
   updateChannel: UpdateChannel;
   useBulkHeaderEditor: boolean;
+  showGithubStars: boolean;
   useBulkParametersEditor: boolean;
   validateAuthSSL: boolean;
   validateSSL: boolean;

@@ -190,9 +190,6 @@ export class UnconnectedRequestGroupSettingsModal extends React.PureComponent<Pr
   }
 
   _renderDescription() {
-    const {
-    } = this.props;
-
     const { showDescription, defaultPreviewMode, requestGroup } = this.state;
 
     if (!requestGroup) {

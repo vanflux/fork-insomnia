@@ -1,8 +1,10 @@
 import { Breadcrumb, BreadcrumbProps, Header as _Header } from 'insomnia-components';
 import React, { FC, Fragment, ReactNode } from 'react';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import coreLogo from '../images/insomnia-logo.svg';
+import { selectSettings } from '../redux/selectors';
 import { SettingsButton } from './buttons/settings-button';
 import { AccountDropdownButton } from './dropdowns/account-dropdown/account-dropdown';
 import { GitHubStarsButton } from './github-stars-button';
@@ -40,13 +42,14 @@ export const AppHeader: FC<AppHeaderProps> = ({
   gridCenter,
   gridRight,
 }) => {
+  const { showGithubStars } = useSelector(selectSettings);
   return (
     <Header
       gridLeft={(
         <Fragment>
           <LogoWraper>
             <img style={{ zIndex: 1 }} src={coreLogo} alt="Insomnia" width="28" height="28" />
-            <GitHubStarsButton />
+            {showGithubStars && <GitHubStarsButton />}
           </LogoWraper>
           <Breadcrumb {...breadcrumbProps} />
         </Fragment>
