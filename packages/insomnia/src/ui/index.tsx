@@ -65,12 +65,16 @@ if (isDevelopment()) {
 function showUpdateNotification() {
   console.log('[app] Update Available');
   // eslint-disable-next-line no-new
-  new window.Notification('Insomnia Update Ready', {
-    body: 'Relaunch the app for it to take effect',
-    silent: true,
-    // @ts-expect-error -- TSCONVERSION
-    sticky: true,
-  });
+  try {
+    new window.Notification('Insomnia Update Ready', {
+      body: 'Relaunch the app for it to take effect',
+      silent: true,
+      // @ts-expect-error -- TSCONVERSION
+      sticky: true,
+    });
+  } catch (e) {
+
+  }
 }
 
 ipcRenderer.on('update-available', () => {

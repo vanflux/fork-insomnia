@@ -8,7 +8,7 @@ import { CodeEditor,  UnconnectedCodeEditor } from '../codemirror/code-editor';
 
 // NeDB field names cannot begin with '$' or contain a period '.'
 // Docs: https://github.com/DeNA/nedb#inserting-documents
-const INVALID_NEDB_KEY_REGEX = /^?\$|^\.$/;
+const INVALID_NEDB_KEY_REGEX = /^\$|^\$|^.$/;
 
 export const ensureKeyIsValid = (key: string, isRoot: boolean): string | null => {
   if (key.match(INVALID_NEDB_KEY_REGEX)) {
