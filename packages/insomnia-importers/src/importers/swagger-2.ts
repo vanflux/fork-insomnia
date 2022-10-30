@@ -106,7 +106,7 @@ const parseEndpoints = (document: OpenAPIV2.Document) => {
   );
 
   const requests: ImportRequest[] = [];
-  endpointsSchemas.map(endpointSchema => {
+  endpointsSchemas.forEach(endpointSchema => {
     let { tags } = endpointSchema;
     if (!tags || tags.length === 0) {
       tags = [''];
