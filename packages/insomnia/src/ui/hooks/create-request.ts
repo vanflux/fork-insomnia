@@ -58,9 +58,9 @@ export const create = (onComplete: (arg0: string) => Promise<void> | void, defau
     label: 'Name',
     selectText: true,
     cancelable: true,
-    onComplete
+    onComplete,
   });
-}
+};
 
 export type CreateRequestType = 'HTTP' | 'gRPC' | 'GraphQL';
 type RequestCreator = (input: {
@@ -86,8 +86,8 @@ export const createRequest: RequestCreator = async ({
             });
             models.stats.incrementCreatedRequests();
             setActiveRequest(request._id, workspaceId);
-          }
-          create(onComplete, "New Request");
+          };
+          create(onComplete, 'New Request');
         },
       });
       break;
@@ -111,8 +111,8 @@ export const createRequest: RequestCreator = async ({
         });
         models.stats.incrementCreatedRequests();
         setActiveRequest(request._id, workspaceId);
-      }
-      create(onComplete, "New Request");
+      };
+      create(onComplete, 'New Request');
       break;
     }
     case 'HTTP': {
@@ -120,12 +120,12 @@ export const createRequest: RequestCreator = async ({
         const request = await models.request.create({
           parentId,
           method: METHOD_GET,
-          name: name ? name : "New Request",
+          name: name ? name : 'New Request',
         });
         models.stats.incrementCreatedRequests();
         setActiveRequest(request._id, workspaceId);
-      }
-      create(onComplete, "New Request");
+      };
+      create(onComplete, 'New Request');
       break;
     }
 
