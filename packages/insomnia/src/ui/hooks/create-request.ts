@@ -12,7 +12,7 @@ import { isGrpcRequestId } from '../../models/grpc-request';
 import { GrpcRequestMeta } from '../../models/grpc-request-meta';
 import { RequestMeta } from '../../models/request-meta';
 import { WorkspaceMeta } from '../../models/workspace-meta';
-import { showModal } from '../components/modals';
+import { showModal, showPrompt } from '../components/modals';
 import ProtoFilesModal from '../components/modals/proto-files-modal';
 
 export const updateActiveWorkspaceMeta = async (
@@ -50,6 +50,18 @@ export const setActiveRequest = async (
   });
 };
 
+export const create = (onComplete: (arg0: string) => Promise<void> | void, defaultValue: string) => {
+  showPrompt({
+    title: 'New Request',
+    defaultValue: defaultValue || 'New Request',
+    submitName: 'Create',
+    label: 'Name',
+    selectText: true,
+    cancelable: true,
+    onComplete,
+  });
+};
+
 export type CreateRequestType = 'HTTP' | 'gRPC' | 'GraphQL';
 type RequestCreator = (input: {
   parentId: string;
@@ -66,47 +78,54 @@ export const createRequest: RequestCreator = async ({
     case 'gRPC': {
       showModal(ProtoFilesModal, {
         onSave: async (protoFileId: string) => {
-          const request = await models.grpcRequest.create({
-            parentId,
-            name: 'New Request',
-            protoFileId,
-          });
-          models.stats.incrementCreatedRequests();
-          setActiveRequest(request._id, workspaceId);
+          const onComplete = async (name: string) => {
+            const request = await models.grpcRequest.create({
+              parentId,
+              name,
+              protoFileId,
+            });
+            models.stats.incrementCreatedRequests();
+            setActiveRequest(request._id, workspaceId);
+          };
+          create(onComplete, 'New Request');
         },
       });
       break;
     }
-
     case 'GraphQL': {
-      const request = await models.request.create({
-        parentId,
-        method: METHOD_POST,
-        headers: [
-          {
-            name: 'Content-Type',
-            value: CONTENT_TYPE_JSON,
+      const onComplete = async (name: string) => {
+        const request = await models.request.create({
+          parentId,
+          method: METHOD_POST,
+          headers: [
+            {
+              name: 'Content-Type',
+              value: CONTENT_TYPE_JSON,
+            },
+          ],
+          body: {
+            mimeType: CONTENT_TYPE_GRAPHQL,
+            text: '',
           },
-        ],
-        body: {
-          mimeType: CONTENT_TYPE_GRAPHQL,
-          text: '',
-        },
-        name: 'New Request',
-      });
-      models.stats.incrementCreatedRequests();
-      setActiveRequest(request._id, workspaceId);
+          name,
+        });
+        models.stats.incrementCreatedRequests();
+        setActiveRequest(request._id, workspaceId);
+      };
+      create(onComplete, 'New Request');
       break;
     }
-
     case 'HTTP': {
-      const request = await models.request.create({
-        parentId,
-        method: METHOD_GET,
-        name: 'New Request',
-      });
-      models.stats.incrementCreatedRequests();
-      setActiveRequest(request._id, workspaceId);
+      const onComplete = async (name: string) => {
+        const request = await models.request.create({
+          parentId,
+          method: METHOD_GET,
+          name: name ? name : 'New Request',
+        });
+        models.stats.incrementCreatedRequests();
+        setActiveRequest(request._id, workspaceId);
+      };
+      create(onComplete, 'New Request');
       break;
     }
 
